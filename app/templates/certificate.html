@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate of Completion</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .outer-border {
+            border: 6px solid #0f172a;
+            padding: 6px;
+            background-color: #ffffff;
+        }
+        .inner-border {
+            border: 2px solid #d97706;
+            padding: 30px 20px 20px 20px;
+            text-align: center;
+            background-color: #ffffff;
+        }
+        .header {
+            margin-bottom: 15px;
+        }
+        .badge {
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #d97706;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0f172a;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 5px 0 8px 0;
+        }
+        .subtitle {
+            font-size: 15px;
+            color: #64748b;
+            font-style: italic;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        .recipient-container {
+            width: 85%;
+            margin: 10px auto 15px auto;
+            text-align: center;
+        }
+        .recipient-name {
+            font-weight: bold;
+            color: #1e3a8a;
+            padding-bottom: 10px;
+            margin: 0 auto;
+            line-height: 1.2;
+        }
+        .recipient-divider {
+            width: 75%;
+            border-bottom: 2px solid #cbd5e1;
+            margin: 8px auto 20px auto;
+        }
+        .description {
+            font-size: 15px;
+            color: #334155;
+            width: 85%;
+            margin: 20px auto 25px auto;
+            line-height: 1.5;
+        }
+        .event-name {
+            font-weight: bold;
+            color: #0f172a;
+            font-size: 21px;
+            display: block;
+            margin-top: 10px;
+        }
+        .footer-table {
+            width: 90%;
+            margin: 30px auto 5px auto;
+        }
+        .footer-col {
+            vertical-align: bottom;
+            font-size: 13px;
+            color: #475569;
+        }
+        .signature-line {
+            width: 150px;
+            border-top: 1px solid #94a3b8;
+            margin-bottom: 6px;
+        }
+        .cert-seal {
+            font-size: 11px;
+            font-weight: bold;
+            color: #d97706;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid #d97706;
+            padding: 5px 12px;
+            text-align: center;
+        }
+        .cert-id {
+            margin-top: 20px;
+            font-size: 10px;
+            color: #94a3b8;
+            font-family: monospace;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-border">
+        <div class="inner-border">
+            <div class="header">
+                <div class="badge">Official Certificate</div>
+                <h1 class="title">Certificate of Completion</h1>
+                <div class="subtitle">This certificate is proudly presented to</div>
+            </div>
+
+            <div class="recipient-container">
+                <div class="recipient-name" style="font-size: {{ name_font_size }}px;">
+                    {{ recipient_name }}
+                </div>
+                <div class="recipient-divider"></div>
+            </div>
+
+            <div class="description">
+                for successfully completing all requirements and demonstrating proficiency in
+                <span class="event-name">{{ event_name }}</span>
+            </div>
+
+            <table class="footer-table">
+                <tr>
+                    <td class="footer-col" style="text-align: left; width: 35%;">
+                        <div class="signature-line"></div>
+                        <strong>Date Issued:</strong> {{ completion_date }}
+                    </td>
+                    <td class="footer-col" style="text-align: center; width: 30%;">
+                        <span class="cert-seal">VERIFIED</span>
+                    </td>
+                    <td class="footer-col" style="text-align: right; width: 35%;">
+                        <div class="signature-line" style="margin-left: auto;"></div>
+                        <strong>Authorized Signatory</strong>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="cert-id">Certificate ID: {{ certificate_id }}</div>
+        </div>
+    </div>
+</body>
+</html>

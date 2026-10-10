@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+
+# Database & Generated Files
+*.db
+*.sqlite3
+generated/
+*.pdf
+
+# Environment & IDE
+.env
+.idea/
+.vscode/
+.pytest_cache/
+.coverage
+htmlcov/
