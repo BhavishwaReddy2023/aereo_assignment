@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Certificate Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      color: #222;
+      background: #fafafa;
+    }
+    h2, h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 4px;
+    }
+    .form-inline {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 13px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="email"], input[type="date"] {
+      padding: 7px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      width: 250px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #fdfdfd;
+    }
+    button, .btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #888;
+      background: #f8f8f8;
+      border-radius: 3px;
+      text-decoration: none;
+      color: #111;
+      display: inline-block;
+    }
+    button:hover, .btn:hover {
+      background: #e5e5e5;
+    }
+    .btn-primary {
+      background: #0066cc;
+      color: #fff;
+      border-color: #0052a3;
+      font-weight: bold;
+      padding: 8px 18px;
+    }
+    .btn-primary:hover {
+      background: #0052a3;
+    }
+    .btn-danger {
+      color: #b30000;
+      border-color: #cc9999;
+    }
+    .btn-danger:hover {
+      background: #ffe6e6;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+    .status-success, .status-completed { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-processing { background: #cce5ff; color: #004085; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+    .status-completed_with_errors { background: #ffe8cc; color: #d9480f; }
+    .error-box {
+      background: #fff5f5;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      white-space: pre-line;
+      display: none;
+    }
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      background: #f0f0f0;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #fff;
+      border-bottom: 2px solid #0066cc;
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Certificate Generator</h2>
+
+  <div class="tab-bar">
+    <button type="button" class="tab-btn active" id="tabCreate" onclick="switchTab('create')">1. Create New Job</button>
+    <button type="button" class="tab-btn" id="tabAllJobs" onclick="switchTab('allJobs')">2. All Jobs History</button>
+  </div>
+
+  <!-- TAB 1: CREATE NEW JOB -->
+  <div id="viewCreate">
+    <div class="section">
+      <h3>Create Certificate Request</h3>
+      
+      <div id="errorBox" class="error-box"></div>
+
+      <div class="form-inline">
+        <div class="form-group">
+          <label for="eventName">Event / Course Name:</label>
+          <input type="text" id="eventName" value="Python Backend Bootcamp" required>
+        </div>
+        <div class="form-group">
+          <label for="eventDate">Event Date:</label>
+          <input type="date" id="eventDate" required>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 8px;">
+        <button type="button" onclick="fillSampleData()">Fill Sample Data</button>
+        <button type="button" onclick="addRecipientRow()">+ Add Row</button>
+        <button type="button" onclick="clearRows()">Clear</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 45%;">Participant Name</th>
+            <th style="width: 45%;">Participant Email (must be valid: name@example.com)</th>
+            <th style="width: 10%;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="recipientTableBody">
+          <!-- Dynamic rows -->
+        </tbody>
+      </table>
+
+      <div style="margin-top: 14px;">
+        <button type="button" class="btn-primary" id="btnGenerate" onclick="submitJob()">Generate Certificates</button>
+        <span id="submitStatus" style="margin-left: 12px; font-size: 13px; color: #555;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: ALL JOBS LIST -->
+  <div id="viewAllJobs" style="display: none;">
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>All Jobs in Database</h3>
+        <button type="button" onclick="loadAllJobs()">Refresh Jobs List</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 250px;">Job ID</th>
+            <th>Event Name</th>
+            <th style="width: 120px;">Event Date</th>
+            <th style="width: 110px;">Status</th>
+            <th style="width: 100px;">Counts</th>
+            <th style="width: 130px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="allJobsTableBody">
+          <tr><td colspan="6" style="text-align: center; color: #888;">Loading jobs...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CERTIFICATES DETAIL TABLE (Shown for active or selected job) -->
+  <div class="section" id="certificatesSection" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 id="certSectionTitle">Certificates Under Job</h3>
+      <div>
+        <span id="jobStatusBadge" class="status-badge status-pending">pending</span>
+        <button type="button" onclick="refreshCurrentJob()" style="margin-left: 8px;">Refresh</button>
+      </div>
+    </div>
+
+    <p id="jobMetaDetails" style="font-size: 13px; color: #555; margin: 8px 0;"></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40px;">#</th>
+          <th>Participant Name</th>
+          <th>Email</th>
+          <th style="width: 130px;">Status</th>
+          <th style="width: 170px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="certificatesTableBody">
+        <!-- Certificate rows -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let activeJobId = null;
+    let pollInterval = null;
+
+    // Set default date to today
+    document.getElementById("eventDate").value = new Date().toISOString().split("T")[0];
+
+    const sampleRecipients = [
+      { name: "Bhavishwa Puli", email: "bhavishwapuli@example.com" },
+      { name: "Tharun Reddy", email: "tharun@example.com" },
+      { name: "Professor Bartholomew Harrington-Smythe III", email: "bartholomew@example.com" }
+    ];
+
+    function switchTab(tab) {
+      document.getElementById("tabCreate").className = "tab-btn" + (tab === 'create' ? ' active' : '');
+      document.getElementById("tabAllJobs").className = "tab-btn" + (tab === 'allJobs' ? ' active' : '');
+      document.getElementById("viewCreate").style.display = tab === 'create' ? 'block' : 'none';
+      document.getElementById("viewAllJobs").style.display = tab === 'allJobs' ? 'block' : 'none';
+
+      if (tab === 'allJobs') {
+        loadAllJobs();
+      }
+    }
+
+    function addRecipientRow(name = "", email = "") {
+      const tbody = document.getElementById("recipientTableBody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="text" class="rec-name" value="${escapeHtml(name)}" placeholder="Full Name" style="width: 95%;"></td>
+        <td><input type="email" class="rec-email" value="${escapeHtml(email)}" placeholder="user@example.com" style="width: 95%;"></td>
+        <td><button type="button" class="btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function fillSampleData() {
+      document.getElementById("recipientTableBody").innerHTML = "";
+      sampleRecipients.forEach(r => addRecipientRow(r.name, r.email));
+      hideError();
+    }
+
+    function clearRows() {
+      document.getElementById("recipientTableBody").innerHTML = "";
+      addRecipientRow();
+      hideError();
+    }
+
+    function showError(msg) {
+      const box = document.getElementById("errorBox");
+      box.textContent = msg;
+      box.style.display = "block";
+    }
+
+    function hideError() {
+      const box = document.getElementById("errorBox");
+      box.style.display = "none";
+      box.textContent = "";
+    }
+
+    // Submit Job Form
+    async function submitJob() {
+      hideError();
+
+      const eventName = document.getElementById("eventName").value.trim();
+      const eventDate = document.getElementById("eventDate").value.trim();
+      const rows = document.querySelectorAll("#recipientTableBody tr");
+
+      if (!eventName) {
+        showError("Event name cannot be empty.");
+        return;
+      }
+      if (!eventDate) {
+        showError("Please pick an event date.");
+        return;
+      }
+
+      const recipients = [];
+      let hasFormatError = false;
+
+      rows.forEach((r, idx) => {
+        const name = r.querySelector(".rec-name").value.trim();
+        const email = r.querySelector(".rec-email").value.trim();
+
+        if (!name && !email) return; // Skip empty row
+
+        if (!name) {
+          showError(`Row #${idx + 1}: Name cannot be empty.`);
+          hasFormatError = true;
+          return;
+        }
+
+        // Basic email check
+        if (!email || !email.includes("@") || !email.includes(".")) {
+          showError(`Row #${idx + 1} (${name}): '${email}' is not a valid email address (must be like name@example.com).`);
+          hasFormatError = true;
+          return;
+        }
+
+        recipients.push({ name, email });
+      });
+
+      if (hasFormatError) return;
+
+      if (recipients.length === 0) {
+        showError("Please add at least one recipient with valid name and email.");
+        return;
+      }
+
+      const btn = document.getElementById("btnGenerate");
+      const statusText = document.getElementById("submitStatus");
+      btn.disabled = true;
+      statusText.textContent = "Submitting job...";
+
+      try {
+        const res = await fetch(`${API_BASE}/jobs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_name: eventName,
+            event_date: eventDate,
+            recipients: recipients
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          let message = "Request failed";
+
+          if (Array.isArray(errData.detail)) {
+            // FastAPI validation error array
+            message = errData.detail.map(d => {
+              const loc = d.loc ? d.loc.filter(x => x !== 'body').join('.') : '';
+              return `${loc ? loc + ': ' : ''}${d.msg}`;
+            }).join('\n');
+          } else if (typeof errData.detail === "string") {
+            message = errData.detail;
+          }
+
+          showError("Validation Error:\n" + message);
+          statusText.textContent = "";
+          return;
+        }
+
+        const data = await res.json();
+        const jobId = data.job_id || data.id;
+        statusText.textContent = `Job created: ${jobId.slice(0, 8)}... Processing started.`;
+
+        // Load & view certificates table
+        viewJobCertificates(jobId, true);
+      } catch (err) {
+        showError("Network/Server Error: " + err.message);
+        statusText.textContent = "";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // View Job Certificates & poll
+    function viewJobCertificates(jobId, autoPoll = false) {
+      activeJobId = jobId;
+      document.getElementById("certificatesSection").style.display = "block";
+      document.getElementById("certificatesSection").scrollIntoView({ behavior: "smooth" });
+
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+
+      fetchJobDetails(jobId);
+
+      if (autoPoll) {
+        pollInterval = setInterval(async () => {
+          const isDone = await fetchJobDetails(jobId);
+          if (isDone) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            if (document.getElementById("viewAllJobs").style.display === "block") {
+              loadAllJobs();
+            }
+          }
+        }, 1200);
+      }
+    }
+
+    function refreshCurrentJob() {
+      if (activeJobId) fetchJobDetails(activeJobId);
+    }
+
+    async function fetchJobDetails(jobId) {
+      try {
+        const res = await fetch(`${API_BASE}/jobs/${jobId}`);
+        if (!res.ok) return true;
+        const job = await res.json();
+
+        // Title and badge
+        document.getElementById("certSectionTitle").textContent = `Certificates: ${job.event_name}`;
+        const badge = document.getElementById("jobStatusBadge");
+        badge.className = `status-badge status-${job.status}`;
+        badge.textContent = job.status.replace("_", " ");
+
+        // Meta info
+        const done = (job.successful_count || 0) + (job.failed_count || 0);
+        document.getElementById("jobMetaDetails").textContent = 
+          `Job ID: ${job.id} | Date: ${job.event_date} | Progress: ${done} / ${job.total_count} (Success: ${job.successful_count}, Failed: ${job.failed_count})`;
+
+        // Certificates table
+        const tbody = document.getElementById("certificatesTableBody");
+        tbody.innerHTML = "";
+
+        const certs = job.certificates || [];
+        if (certs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888;">No certificates generated yet.</td></tr>`;
+        } else {
+          certs.forEach((cert, idx) => {
+            const certUrl = cert.download_url || `${API_BASE}/certificates/${cert.id}`;
+            const isSuccess = cert.status === "success";
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${idx + 1}</td>
+              <td><strong>${escapeHtml(cert.recipient_name)}</strong></td>
+              <td>${escapeHtml(cert.recipient_email)}</td>
+              <td>
+                <span class="status-badge status-${cert.status}">${cert.status}</span>
+                ${cert.error_message ? `<div style="font-size: 11px; color: red; margin-top: 3px;">${escapeHtml(cert.error_message)}</div>` : ''}
+              </td>
+              <td>
+                ${isSuccess ? `
+                  <a href="${certUrl}" target="_blank" class="btn btn-sm">View</a>
+                  <button type="button" class="btn-sm" onclick="downloadPdf('${certUrl}', '${escapeJs(cert.recipient_name)}')">Download</button>
+                ` : `
+                  <span style="color: #888; font-size: 12px;">${cert.status === 'processing' ? 'Generating...' : 'Not ready'}</span>
+                `}
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        return ["completed", "completed_with_errors", "failed"].includes(job.status);
+      } catch (err) {
+        console.error(err);
+        return false;
+      }
+    }
+
+    // Download PDF with filename formatted as participant name
+    async function downloadPdf(url, recipientName) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Download failed");
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const safeName = recipientName.replace(/[^a-zA-Z0-9_\- ]/g, "").trim().replace(/\s+/g, "_");
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = blobUrl;
+        a.download = `${safeName}_Certificate.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        a.remove();
+      } catch (err) {
+        alert("Download error: " + err.message);
+      }
+    }
+
+    // Load All Jobs (GET /jobs)
+    async function loadAllJobs() {
+      const tbody = document.getElementById("allJobsTableBody");
+      try {
+        const res = await fetch(`${API_BASE}/jobs`);
+        if (!res.ok) {
+          tbody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Failed to load jobs</td></tr>`;
+          return;
+        }
+
+        const jobs = await res.json();
+        if (jobs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #888;">No jobs found in database.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        jobs.forEach(job => {
+          const jobId = job.job_id || job.id;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-family: monospace; font-size: 12px;">${jobId}</td>
+            <td><strong>${escapeHtml(job.event_name)}</strong></td>
+            <td>${escapeHtml(job.event_date)}</td>
+            <td><span class="status-badge status-${job.status}">${job.status.replace("_", " ")}</span></td>
+            <td>Total: ${job.total_count}<br><small style="color: #666;">✓ ${job.successful_count} / ✗ ${job.failed_count}</small></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-primary" onclick="viewJobCertificates('${jobId}', false)">View Certificates</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error connecting to API</td></tr>`;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function escapeJs(str) {
+      if (!str) return "";
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // Initialize with sample data
+    fillSampleData();
+  </script>
+</body>
+</html>

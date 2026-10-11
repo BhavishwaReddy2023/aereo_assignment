@@ -51,6 +51,7 @@ Once running:
 - **API Base URL**: `http://127.0.0.1:8000`
 - **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
 - **ReDoc Documentation**: `http://127.0.0.1:8000/redoc`
+- **HTML Frontend**: Open `frontend/index.html` directly in your browser for an easy-to-navigate interface to submit bulk requests, track generation progress, and view or download certificates.
 
 ---
 
