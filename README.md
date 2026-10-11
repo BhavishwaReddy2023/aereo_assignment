@@ -200,7 +200,6 @@ Returns the job progress, status, and download links for each certificate in tha
 
 1. **Asynchronous Background Processing**:
    - Uses FastAPI's `BackgroundTasks` to quickly return `202 Accepted` while rendering PDFs in the background without blocking API requests.
-   - Avoids heavyweight message brokers (Celery/Redis) to keep the setup minimal and easy to run locally.
 
 2. **Failure Isolation**:
    - Each recipient's certificate generation is wrapped in an isolated try-catch block.
@@ -214,3 +213,7 @@ Returns the job progress, status, and download links for each certificate in tha
 4. **Thread-Safe Database Sessions**:
    - SQLite with SQLAlchemy ORM.
    - Background workers open a separate, isolated database session (`SessionLocal`) to ensure thread safety and prevent connection leaks.
+
+5. **Dynamic Name Font Scaling**:
+   - Font sizes for recipient names automatically scale based on string length (from 36px down to 18px) to prevent long names from wrapping awkwardly, clipping, or overflowing the certificate borders.
+   
