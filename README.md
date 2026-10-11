@@ -1,192 +1,116 @@
 # Bulk Certificate Generator Backend
 
-A robust, production-ready Python backend API built with FastAPI, SQLAlchemy (SQLite), Jinja2, and WeasyPrint / xhtml2pdf. The system accepts bulk certificate requests containing multiple recipients, validates input data, generates individual landscape PDF certificates asynchronously in the background, tracks job progress, insulates against individual certificate failures, and serves downloadable PDF certificates.
+A backend API for generating bulk PDF certificates asynchronously.
 
 ---
 
-## 1. Architecture Overview
+## 1. How to Set Up the Project
 
-The system follows a clean modular service-oriented architecture:
+### Prerequisites
+- Python 3.10+
+- pip
 
-```
-bulk-certificate-generator/
-│
-├── app/
-│   ├── main.py                   # FastAPI application initialization & middleware
-│   ├── config.py                 # Centralized configuration & environment settings
-│   ├── database.py               # SQLAlchemy engine, session maker, & get_db dependency
-│   ├── models.py                 # ORM Database models (Job & Certificate)
-│   ├── schemas.py                # Pydantic schemas for request validation & responses
-│   ├── routes/
-│   │   ├── jobs.py               # POST /jobs, GET /jobs/{job_id}, GET /jobs/{job_id}/certificates
-│   │   └── certificates.py       # GET /certificates/{certificate_id}
-│   ├── services/
-│   │   ├── certificate_generator.py # Jinja2 HTML rendering & HTML-to-PDF conversion
-│   │   └── job_processor.py         # Asynchronous background job worker
-│   └── templates/
-│       └── certificate.html      # Professional landscape certificate HTML/CSS template
-│
-├── generated/                    # Local storage directory for generated PDF files
-├── tests/
-│   ├── conftest.py               # Test fixtures (isolated SQLite DB & temp file storage)
-│   ├── test_jobs.py              # API endpoint validation & job routes tests
-│   ├── test_certificates.py      # Certificate retrieval & error handling tests
-│   └── test_generation.py        # PDF rendering & failure-resilience background tests
-├── requirements.txt              # Project dependency manifest
-├── .env.example                  # Environment variable reference
-└── README.md                     # Comprehensive project documentation
-```
+### Setup Steps
 
-### System Architecture Highlights:
-- **Request Isolation**: HTTP requests return immediately with `202 Accepted` after database insertion of `Job` and `Certificate` records.
-- **Background Worker**: `FastAPI.BackgroundTasks` spawns `process_bulk_job(job_id)` in the background.
-- **Session Safety**: The background worker opens a fresh, isolated SQLAlchemy `SessionLocal()` session to prevent concurrency issues and request-session lifecycle leaks.
-- **Failure Resilience**: Individual certificate generation errors are caught and recorded. The loop continues processing remaining recipients, leaving the job status as `completed_with_errors` if partial failures occur.
-- **Dynamic Text Scaling**: Dynamic font sizing prevents long recipient names from overflowing or being truncated.
-- **Dual PDF Engine**: Primary rendering engine is **WeasyPrint**. If system-level GTK libraries are absent (e.g., native Windows environments), the engine seamlessly falls back to **xhtml2pdf**.
+1. **Clone or navigate to the project directory:**
+   
+   be in the root folder "aereo_assignment"
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   # Windows (PowerShell)
+   python -m venv venv
+   .\venv\Scripts\activate
+
+   # Linux / macOS
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
 
 ---
 
-## 2. Prerequisites & Setup
+## 2. How to Run the Application
 
-### Requirements
-- **Python**: `3.10` or higher (tested on Python 3.12)
-- **Pip**: `pip` 24.0+
-
-### System Dependencies for PDF Generation
-
-#### Linux (Ubuntu/Debian)
-```bash
-sudo apt-get update
-sudo apt-get install -y build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-```
-
-#### macOS (Homebrew)
-```bash
-brew install cairo pango gdk-pixbuf libffi
-```
-
-#### Windows
-WeasyPrint relies on GTK3 libraries (`libgobject-2.0-0`). If GTK3 is not installed via MSYS2 / GTK for Windows, **the application automatically detects the missing library and falls back to `xhtml2pdf` without requiring extra system drivers or breaking runtime execution**.
-
----
-
-## 3. Installation Guide
-
-### Step 1: Clone or Navigate to Project Directory
-```bash
-cd c:/coding/aereo_assignment
-```
-
-### Step 2: Create Virtual Environment
-```bash
-# On Windows (PowerShell)
-python -m venv venv
-.\venv\Scripts\activate
-
-# On Linux / macOS
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 3: Install Dependencies
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Step 4: Environment Configuration
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-Default configuration values:
-```env
-APP_NAME="Bulk Certificate Generator Backend"
-DATABASE_URL="sqlite:///./certificates.db"
-OUTPUT_DIR="generated"
-TEMPLATE_DIR="app/templates"
-MAX_RECIPIENTS_PER_REQUEST=1000
-```
-
----
-
-## 4. Running the Application
-
-Start the FastAPI development server with Uvicorn:
+Start the FastAPI application with Uvicorn:
 
 ```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Once running:
-- **Swagger Interactive UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc Documentation**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+- **API Base URL**: `http://127.0.0.1:8000`
+- **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
+- **ReDoc Documentation**: `http://127.0.0.1:8000/redoc`
 
 ---
 
-## 5. Running Automated Tests
+## 3. How to Run Tests
 
-Run the full pytest suite:
+Run the test suite using pytest:
 
 ```bash
 pytest -v
 ```
 
-All 17 automated tests verify request validation, PDF generation, status updates, individual failure resilience, file retrieval, and missing file handling.
+All unit and integration tests run in-memory and verify request validation, background processing, failure resilience, and certificate retrieval.
 
 ---
 
-## 6. API Reference & Usage Examples
+## 4. How to Submit a Certificate Generation Request
 
-### 1. Create Bulk Generation Job
+Submit a `POST` request to `/jobs` with the event details and recipient list.
+
+### Endpoint
 `POST /jobs`
 
-Creates a new job and queues PDF generation for all recipients.
-
-**Sample Request Body:**
+### Request Body
 ```json
 {
   "event_name": "Full Stack Backend Engineering Bootcamp",
   "event_date": "October 9, 2026",
   "recipients": [
     {
-      "name": "Jane Doe",
-      "email": "jane.doe@example.com"
+      "name": "Bhavishwa Puli",
+      "email": "bhavishwapuli@example.com"
     },
     {
-      "name": "Professor Bartholomew Dominick Harrington-Smythe III",
-      "email": "bartholomew@example.com"
-    },
-    {
-      "name": "Alice Johnson",
-      "email": "alice@example.com"
+      "name": "Tharun Reddy",
+      "email": "tharun@example.com"
     }
   ]
 }
 ```
 
-**cURL Example:**
+### Example (cURL / Bash)
 ```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/jobs' \
-  -H 'Content-Type: application/json' \
+curl -X POST "http://127.0.0.1:8000/jobs" \
+  -H "Content-Type: application/json" \
   -d '{
     "event_name": "Full Stack Backend Engineering Bootcamp",
     "event_date": "October 9, 2026",
     "recipients": [
-      {"name": "Jane Doe", "email": "jane.doe@example.com"}
+      {"name": "Bhavishwa Puli", "email": "bhavishwapuli@example.com"}
     ]
   }'
 ```
 
-**PowerShell Example:**
+### Example (PowerShell)
 ```powershell
 $body = @{
     event_name = "Full Stack Backend Engineering Bootcamp"
     event_date = "October 9, 2026"
     recipients = @(
-        @{ name = "Jane Doe"; email = "jane.doe@example.com" }
+        @{ name = "Bhavishwa Puli"; email = "bhavishwapuli@example.com" }
     )
 } | ConvertTo-Json -Depth 5
 
@@ -194,10 +118,11 @@ $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/jobs" -Method Post -Co
 $response | ConvertTo-Json
 ```
 
-**Response (`202 Accepted`):**
+### Response (`202 Accepted`)
 ```json
 {
   "id": "e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d",
+  "job_id": "e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d",
   "event_name": "Full Stack Backend Engineering Bootcamp",
   "event_date": "October 9, 2026",
   "status": "pending",
@@ -213,138 +138,79 @@ $response | ConvertTo-Json
 
 ---
 
-### 2. Get Job Status & Certificate Details
+## 5. How to Retrieve Generated Certificates
+
+### Option A: Check a Specific Job's Status & Certificate IDs
 `GET /jobs/{job_id}`
 
-Retrieves overall job progress, recipient counts, and detailed per-certificate status.
+- **cURL**:
+  ```bash
+  curl -X GET "http://127.0.0.1:8000/jobs/<job_id>"
+  ```
+- **PowerShell**:
+  ```powershell
+  Invoke-RestMethod -Uri "http://127.0.0.1:8000/jobs/$($response.job_id)" -Method Get | ConvertTo-Json
+  ```
 
-**cURL Example:**
-```bash
-curl -X 'GET' 'http://127.0.0.1:8000/jobs/e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d'
-```
+Returns the job progress, status, and download links for each certificate in that job.
 
-**PowerShell Example:**
-```powershell
-$response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/jobs/e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d" -Method Get
-$response | ConvertTo-Json -Depth 5
-```
+### Option B: List All Jobs in the Database
+`GET /jobs`
 
-**Response (`200 OK`):**
-```json
-{
-  "id": "e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d",
-  "event_name": "Full Stack Backend Engineering Bootcamp",
-  "event_date": "October 9, 2026",
-  "status": "completed",
-  "total_count": 1,
-  "successful_count": 1,
-  "failed_count": 0,
-  "pending_count": 0,
-  "processing_count": 0,
-  "created_at": "2026-10-09T21:20:00.000000Z",
-  "completed_at": "2026-10-09T21:20:01.500000Z",
-  "certificates": [
-    {
-      "id": "7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c",
-      "job_id": "e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d",
-      "recipient_name": "Jane Doe",
-      "recipient_email": "jane.doe@example.com",
-      "status": "success",
-      "file_path": "generated/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c.pdf",
-      "download_url": "http://127.0.0.1:8000/certificates/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c",
-      "error_message": null,
-      "created_at": "2026-10-09T21:20:00.000000Z"
-    }
-  ]
-}
-```
+- **cURL**:
+  ```bash
+  curl -X GET "http://127.0.0.1:8000/jobs"
+  ```
+- **PowerShell**:
+  ```powershell
+  Invoke-RestMethod -Uri "http://127.0.0.1:8000/jobs" -Method Get | ConvertTo-Json
+  ```
 
----
+### Option C: List All Certificates Across All Jobs
+`GET /certificates`
 
-### 3. Get Certificates for Job
-`GET /jobs/{job_id}/certificates`
+- **cURL**:
+  ```bash
+  curl -X GET "http://127.0.0.1:8000/certificates"
+  ```
+- **PowerShell**:
+  ```powershell
+  Invoke-RestMethod -Uri "http://127.0.0.1:8000/certificates" -Method Get | ConvertTo-Json
+  ```
 
-Returns certificate records and download links for all recipients in a job.
-
-**cURL Example:**
-```bash
-curl -X 'GET' 'http://127.0.0.1:8000/jobs/e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d/certificates'
-```
-
-**PowerShell Example:**
-```powershell
-$response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/jobs/e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d/certificates" -Method Get
-$response | ConvertTo-Json -Depth 5
-```
-
-**Response (`200 OK`):**
-```json
-[
-  {
-    "id": "7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c",
-    "job_id": "e4a8b2d1-9f3c-4e8a-b1d5-7c2e9a3f4b5d",
-    "recipient_name": "Jane Doe",
-    "recipient_email": "jane.doe@example.com",
-    "status": "success",
-    "file_path": "generated/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c.pdf",
-    "download_url": "http://127.0.0.1:8000/certificates/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c",
-    "error_message": null,
-    "created_at": "2026-10-09T21:20:00.000000Z"
-  }
-]
-```
-
----
-
-### 4. Download Certificate PDF
+### Option D: Download an Individual Certificate PDF
 `GET /certificates/{certificate_id}`
 
-Streams the generated PDF file directly for browser view or file download.
+- **cURL**:
+  ```bash
+  curl -O "http://127.0.0.1:8000/certificates/<certificate_id>"
+  ```
+- **PowerShell**:
+  ```powershell
+  Invoke-WebRequest -Uri "http://127.0.0.1:8000/certificates/<certificate_id>" -OutFile "certificate.pdf"
+  ```
 
-**cURL Example:**
-```bash
-curl -O 'http://127.0.0.1:8000/certificates/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c'
-```
-
-**PowerShell Example:**
-```powershell
-Invoke-WebRequest -Uri "http://127.0.0.1:8000/certificates/7b2a9f1c-3d4e-5f6a-8b9c-0d1e2f3a4b5c" -OutFile "certificate.pdf"
-```
-
-**HTTP Status Behaviors:**
-- `200 OK`: Returns binary PDF file (`Content-Type: application/pdf`).
-- `404 Not Found`: Certificate ID does not exist, or file missing on disk.
-- `400 Bad Request`: Certificate status is `failed`, `pending`, or `processing`.
+- Streams the generated PDF binary (`Content-Type: application/pdf`).
+- Returns `400 Bad Request` if the certificate is not yet ready or failed.
+- Returns `404 Not Found` if the ID does not exist or the file is missing.
 
 ---
 
-## 7. Status Definitions
+## 6. Important Implementation / Design Decisions
 
-### Job Statuses
-- `pending`: Job record created, awaiting background worker execution.
-- `processing`: Background worker actively generating PDFs.
-- `completed`: All certificate PDFs generated successfully (`failed_count == 0`).
-- `completed_with_errors`: Job finished, but one or more certificates failed (`successful_count > 0` and `failed_count > 0`).
-- `failed`: Job finished with 0 successful certificates (`successful_count == 0`).
+1. **Asynchronous Background Processing**:
+   - Uses FastAPI's `BackgroundTasks` to quickly return `202 Accepted` while rendering PDFs in the background without blocking API requests.
+   - Avoids heavyweight message brokers (Celery/Redis) to keep the setup minimal and easy to run locally.
 
-### Certificate Statuses
-- `pending`: Record created, awaiting rendering.
-- `processing`: PDF rendering currently in progress.
-- `success`: PDF generated and saved successfully to disk.
-- `failed`: Rendering or disk write failed; `error_message` contains sanitized failure reason.
+2. **Failure Isolation**:
+   - Each recipient's certificate generation is wrapped in an isolated try-catch block.
+   - If an individual certificate fails, its error is recorded, and the process continues with the remaining recipients.
+   - Overall job status reflects partial failures (`completed_with_errors`) instead of failing the entire batch.
 
----
+3. **Dual PDF Rendering Engine**:
+   - Primary engine is **WeasyPrint** for HTML/CSS rendering.
+   - Seamlessly falls back to **xhtml2pdf** on environments where GTK3 system libraries are unavailable (e.g., standard Windows setups), ensuring zero setup friction.
 
-## 8. Design Decisions & Limitations
-
-1. **Background Tasks Approach**:
-   - Built using FastAPI's standard `BackgroundTasks` runner to avoid heavy external dependencies (Redis, Celery, RabbitMQ) as specified by assignment scope.
-   - **Limitation**: `BackgroundTasks` runs in-process. If the Uvicorn server restarts or crashes during processing, tasks currently executing in memory will be interrupted. There is no durable job persistence broker.
-
-2. **Database Concurrency**:
-   - SQLite is used with `check_same_thread=False` and isolated `SessionLocal()` instances inside background tasks.
-   - For multi-process horizontal scaling (e.g. multi-node deployment), PostgreSQL with Celery/Redis is recommended.
-
-3. **PDF Generation Dual-Engine**:
-   - HTML/CSS rendered using Jinja2 with strict autoescape (`select_autoescape(['html', 'xml'])`).
-   - WeasyPrint provides high-fidelity CSS landscape rendering. Automatic fallback to `xhtml2pdf` ensures zero-breakage on Windows setups missing C GTK libraries.
+4. **Thread-Safe Database Sessions**:
+   - SQLite with SQLAlchemy ORM.
+   - Background workers open a separate, isolated database session (`SessionLocal`) to ensure thread safety and prevent connection leaks.

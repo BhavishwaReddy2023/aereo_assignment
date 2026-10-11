@@ -28,6 +28,10 @@ class Job(Base):
     # Relationship to certificates
     certificates = relationship("Certificate", back_populates="job", cascade="all, delete-orphan")
 
+    @property
+    def job_id(self) -> str:
+        return self.id
+
 
 class Certificate(Base):
     """Represents an individual recipient certificate within a job."""
@@ -44,3 +48,7 @@ class Certificate(Base):
 
     # Relationship to job
     job = relationship("Job", back_populates="certificates")
+
+    @property
+    def certificate_id(self) -> str:
+        return self.id

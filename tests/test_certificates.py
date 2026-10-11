@@ -91,3 +91,27 @@ def test_download_successful_certificate(client, db_session, tmp_path, monkeypat
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
     assert b"%PDF-1.4 Fake PDF Content" in response.content
+
+def test_list_all_certificates(client, db_session):
+    """Test fetching all certificates across all jobs."""
+    job = Job(event_name="Global Summit", event_date="2026-10-10", total_count=1)
+    db_session.add(job)
+    db_session.flush()
+
+    cert = Certificate(
+        job_id=job.id,
+        recipient_name="George Clark",
+        recipient_email="george@example.com",
+        status="pending"
+    )
+    db_session.add(cert)
+    db_session.commit()
+
+    response = client.get("/certificates")
+    assert response.status_code == 200
+    certs = response.json()
+    assert isinstance(certs, list)
+    assert len(certs) >= 1
+    assert "certificate_id" in certs[0]
+    assert "id" in certs[0]
+    assert "recipient_name" in certs[0]

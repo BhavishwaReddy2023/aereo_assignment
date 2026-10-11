@@ -108,3 +108,22 @@ def test_get_job_certificates(client):
     certs = certs_res.json()
     assert len(certs) == 1
     assert certs[0]["recipient_email"] == "david@example.com"
+
+def test_list_all_jobs(client):
+    """Test fetching all jobs in the database."""
+    payload = {
+        "event_name": "Cloud Computing Workshop",
+        "event_date": "2026-10-10",
+        "recipients": [
+            {"name": "Eva Green", "email": "eva@example.com"}
+        ]
+    }
+    client.post("/jobs", json=payload)
+
+    response = client.get("/jobs")
+    assert response.status_code == 200
+    jobs = response.json()
+    assert isinstance(jobs, list)
+    assert len(jobs) >= 1
+    assert "job_id" in jobs[0]
+    assert "id" in jobs[0]

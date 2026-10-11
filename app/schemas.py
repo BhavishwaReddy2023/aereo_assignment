@@ -44,6 +44,7 @@ class JobCreateRequest(BaseModel):
 class CertificateResponse(BaseModel):
     """Schema for certificate information in API responses."""
     id: str
+    certificate_id: str
     job_id: str
     recipient_name: str
     recipient_email: str
@@ -59,6 +60,7 @@ class CertificateResponse(BaseModel):
 class JobSummaryResponse(BaseModel):
     """Summary response for job creation and status tracking."""
     id: str
+    job_id: str
     event_name: str
     event_date: str
     status: str

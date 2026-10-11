@@ -23,6 +23,7 @@ def build_certificate_response(cert: Certificate, request: Request) -> Certifica
     
     return CertificateResponse(
         id=cert.id,
+        certificate_id=cert.id,
         job_id=cert.job_id,
         recipient_name=cert.recipient_name,
         recipient_email=cert.recipient_email,
@@ -43,6 +44,7 @@ def build_job_detail_response(job: Job, request: Request) -> JobDetailResponse:
     
     return JobDetailResponse(
         id=job.id,
+        job_id=job.id,
         event_name=job.event_name,
         event_date=job.event_date,
         status=job.status,
@@ -55,6 +57,37 @@ def build_job_detail_response(job: Job, request: Request) -> JobDetailResponse:
         completed_at=job.completed_at,
         certificates=cert_responses
     )
+
+@router.get("", response_model=List[JobSummaryResponse])
+def get_all_jobs(
+    db: Session = Depends(get_db)
+):
+    """
+    GET /jobs: Return all jobs in the database.
+    """
+    jobs = db.query(Job).order_by(Job.created_at.desc()).all()
+    results = []
+    for job in jobs:
+        certificates = job.certificates or []
+        pending_count = sum(1 for c in certificates if c.status == "pending")
+        processing_count = sum(1 for c in certificates if c.status == "processing")
+        results.append(
+            JobSummaryResponse(
+                id=job.id,
+                job_id=job.id,
+                event_name=job.event_name,
+                event_date=job.event_date,
+                status=job.status,
+                total_count=job.total_count,
+                successful_count=job.successful_count,
+                failed_count=job.failed_count,
+                pending_count=pending_count,
+                processing_count=processing_count,
+                created_at=job.created_at,
+                completed_at=job.completed_at
+            )
+        )
+    return results
 
 @router.post("", response_model=JobSummaryResponse, status_code=status.HTTP_202_ACCEPTED)
 def create_bulk_job(
@@ -97,6 +130,7 @@ def create_bulk_job(
 
     return JobSummaryResponse(
         id=job.id,
+        job_id=job.id,
         event_name=job.event_name,
         event_date=job.event_date,
         status=job.status,
